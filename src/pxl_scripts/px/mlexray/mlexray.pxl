@@ -1,0 +1,8 @@
+import px
+
+# Populate the DataFrame with only the select columns from the `conn_stats` table
+df = px.DataFrame(table='mlexray_stats', start_time='-30s')
+px.display(df)
+
+df = df[df['span_feature']<3.0]
+px.display(df)
