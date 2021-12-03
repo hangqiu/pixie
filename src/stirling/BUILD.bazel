@@ -47,6 +47,7 @@ pl_cc_library(
         "//src/stirling/source_connectors/dynamic_bpftrace:cc_library",
         "//src/stirling/source_connectors/dynamic_tracer:cc_library",
         "//src/stirling/source_connectors/jvm_stats:cc_library",
+        "//src/stirling/source_connectors/mlexray_stats:cc_library",  # for mlexray
         "//src/stirling/source_connectors/network_stats:cc_library",
         "//src/stirling/source_connectors/perf_profiler:cc_library",
         "//src/stirling/source_connectors/pid_runtime:cc_library",
