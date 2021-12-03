@@ -84,6 +84,7 @@ namespace px {
                     return {};
                 case SourceConnectorGroup::kProd:
                     return {
+                            MLEXrayStatsConnector::kName, //mlexray
                             ProcessStatsConnector::kName,
                             NetworkStatsConnector::kName,
                             JVMStatsConnector::kName,
