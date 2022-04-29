@@ -27,6 +27,8 @@
 #include "src/common/system/proc_parser.h"
 #include "src/shared/metadata/metadata.h"
 
+#include "src/stirling/source_connectors/mlexray_stats/mlexray_stats_parser.h"
+
 namespace px {
 namespace stirling {
 
@@ -53,37 +55,29 @@ void MLEXrayStatsConnector::TransferMLEXrayStatsTable(ConnectorContext* ctx,
       continue;
     }
 
-//    ProcParser::MLEXrayStats stats;
-//    int32_t pid = upid.pid();
-    // TODO(zasgar): We should double check the process start time to make sure it still the same
-    // PID.
-//    auto s1 = proc_parser_->ParseProcPIDStat(pid, &stats);
-//    if (!s1.ok()) {
-//      VLOG(1) << absl::Substitute(
-//          "Failed to fetch cpu stat info for PID ($0). Error=\"$1\" skipping.", pid, s1.msg());
-//      continue;
-//    }
-//
-//    auto s2 = proc_parser_->ParseProcPIDStatIO(pid, &stats);
-//    if (!s2.ok()) {
-//      VLOG(1) << absl::Substitute(
-//          "Failed to fetch IO stat info for PID ($0). Error=\"$1\" skipping.", pid, s2.msg());
-//      continue;
-//    }
+    MLEXrayStatsParser MLStatsParser = MLEXrayStatsParser();
+    MLEXrayStatsParser::MLEXrayStats MLStats = MLEXrayStatsParser::MLEXrayStats();
+    auto s = MLStatsParser.parse_log(&MLStats);
 
-    DataTable::RecordBuilder<&kMLEXrayStatsTable> r(data_table, timestamp);
-    // TODO(oazizi): Enable version below, once rest of the agent supports tabletization.
-    //  DataTable::RecordBuilder<&kMLEXrayStatsTable> r(data_table, upid.value(), timestamp);
-    r.Append<r.ColIndex("time_")>(timestamp);
-    // Tabletization key must also be appended as a column value.
-    // See note in RecordBuilder class.
-//    r.Append<r.ColIndex("upid")>(upid.value());
-    r.Append<r.ColIndex("invocation_id")>(0);
-    r.Append<r.ColIndex("invocation_time_ns")>(100);
-    r.Append<r.ColIndex("span_start")>("input");
-    r.Append<r.ColIndex("span_end")>("output");
-    r.Append<r.ColIndex("span_feature")>(3);
-    r.Append<r.ColIndex("context_id")>(0);
+    if (!s.ok()) {
+        VLOG(1) << absl::StrCat("Failed to parse MLExray stats: ", s.msg());
+        continue;
+    }
+
+    for (MLEXrayStatsParser::LayerSpan span : MLStats.layer_spans){
+        DataTable::RecordBuilder<&kMLEXrayStatsTable> r(data_table, timestamp);
+        // TODO(oazizi): Enable version below, once rest of the agent supports tabletization.
+        //  DataTable::RecordBuilder<&kMLEXrayStatsTable> r(data_table, upid.value(), timestamp);
+        r.Append<r.ColIndex("time_")>(timestamp);
+        // Tabletization key must also be appended as a column value.
+        // See note in RecordBuilder class.
+        r.Append<r.ColIndex("invocation_id")>(0);
+        r.Append<r.ColIndex("invocation_time_ns")>(span.invocation_time_ns);
+        r.Append<r.ColIndex("span_start")>(span.span_start);
+        r.Append<r.ColIndex("span_end")>(span.span_end);
+        r.Append<r.ColIndex("span_feature")>(span.span_feature);
+        r.Append<r.ColIndex("context_id")>(0);
+    }
   }
 }
 
